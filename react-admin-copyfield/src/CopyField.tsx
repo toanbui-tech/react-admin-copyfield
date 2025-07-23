@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, isValidElement, useMemo } from 'react'
+import React, { useState, ReactNode, isValidElement } from 'react'
 import { Box, Tooltip } from '@mui/material'
 import { useRecordContext } from 'react-admin'
 
@@ -8,23 +8,16 @@ interface CopyFieldProps {
   sx?: object
 }
 
-export const CopyField: React.FC<CopyFieldProps> = ({
-  text,
-  children,
-  sx,
-}) => {
+export const CopyField: React.FC<CopyFieldProps> = ({ text, children, sx }) => {
   const [copied, setCopied] = useState(false)
   const record = useRecordContext()
+  const hoverText = copied ? 'Copied!' : 'Click to copy'
 
-  const getValueToCopy = () => {
-    if (text) return text
-    if (isValidElement(children) && children.props?.source) {
-      return record?.[children.props.source] ?? ''
-    }
-    return ''
+  let valueToCopy = text
+  if (!text && isValidElement(children) && 'props' in children && children.props.source) {
+    const source = children.props.source
+    valueToCopy = record?.[source] ?? ''
   }
-
-  const valueToCopy = getValueToCopy()
 
   const handleCopy = async () => {
     try {
@@ -33,13 +26,15 @@ export const CopyField: React.FC<CopyFieldProps> = ({
     } catch {}
   }
 
+  const resetCopied = () => copied && setCopied(false)
+
   return (
-    <Tooltip title={copied ? 'Copied!' : 'Click to copy'}>
+    <Tooltip title={hoverText}>
       <Box
         component="span"
         onClick={handleCopy}
-        onMouseLeave={() => setCopied(false)}
-        onBlur={() => setCopied(false)}
+        onMouseLeave={resetCopied}
+        onBlur={resetCopied}
         tabIndex={0}
         sx={{
           display: 'inline-block',
@@ -48,7 +43,7 @@ export const CopyField: React.FC<CopyFieldProps> = ({
           outline: 'none',
           ...sx,
         }}
-        aria-label={copied ? 'Copied!' : 'Click to copy'}
+        aria-label={hoverText}
       >
         {children ?? valueToCopy}
       </Box>
